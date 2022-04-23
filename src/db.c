@@ -79,6 +79,7 @@ void updateLFU(robj *val) {
  * expired on replicas even if the master is lagging expiring our key via DELs
  * in the replication link. */
 robj *lookupKey(redisDb *db, robj *key, int flags) {
+    serverLog(LL_NOTICE,"Hola Hola, looking up a key");
     dictEntry *de = dictFind(db->dict,key->ptr);
     robj *val = NULL;
     if (de) {
@@ -249,6 +250,8 @@ void dbOverwrite(redisDb *db, robj *key, robj *val) {
  * The client 'c' argument may be set to NULL if the operation is performed
  * in a context where there is no clear client performing the operation. */
 void setKey(client *c, redisDb *db, robj *key, robj *val, int flags) {
+    serverLog(LL_NOTICE,"Wanna set a key, I am doing that");
+
     int keyfound = 0;
 
     if (flags & SETKEY_ALREADY_EXIST)

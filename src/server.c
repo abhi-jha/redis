@@ -1150,6 +1150,7 @@ void cronUpdateMemoryStats() {
  * a macro is used: run_with_period(milliseconds) { .... }
  */
 
+// Background server job or cron
 int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     int j;
     UNUSED(eventLoop);
@@ -1212,6 +1213,8 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     /* We received a SIGTERM, shutting down here in a safe way, as it is
      * not ok doing so inside the signal handler. */
     if (server.shutdown_asap && !isShutdownInitiated()) {
+        serverLog(LL_NOTICE,"I am gonna shutdown this server");
+
         if (prepareForShutdown(SHUTDOWN_NOFLAGS) == C_OK) exit(0);
     } else if (isShutdownInitiated()) {
         if (server.mstime >= server.shutdown_mstime || isReadyToShutdown()) {
@@ -1263,6 +1266,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     }
 
     /* Check if a background saving or AOF rewrite in progress terminated. */
+    // Check if a background saving of Database is in progress
     if (hasActiveChildProcess() || ldbPendingChildren())
     {
         run_with_period(1000) receiveChildInfo();
@@ -1283,6 +1287,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
                  CONFIG_BGSAVE_RETRY_DELAY ||
                  server.lastbgsave_status == C_OK))
             {
+                // Async way of checking changes. Used to async save to disk every 3600s
                 serverLog(LL_NOTICE,"%d changes in %d seconds. Saving...",
                     sp->changes, (int)sp->seconds);
                 rdbSaveInfo rsi, *rsiptr;
@@ -1939,6 +1944,7 @@ void initServerConfig(void) {
      * redis.conf using the rename-command directive. */
     server.commands = dictCreate(&commandTableDictType);
     server.orig_commands = dictCreate(&commandTableDictType);
+    // Command is getting populated which itself is a dict.
     populateCommandTable();
 
     /* Debugging */
@@ -2366,10 +2372,13 @@ void makeThreadKillable(void) {
 }
 
 void initServer(void) {
+    // Init server. Server starts here.
+    serverLog(LL_NOTICE, "Starting the server");
     int j;
 
     signal(SIGHUP, SIG_IGN);
     signal(SIGPIPE, SIG_IGN);
+    // Setup signal handlers : ctr+c SIGINT
     setupSignalHandlers();
     makeThreadKillable();
 
@@ -2551,6 +2560,7 @@ void initServer(void) {
     /* Create the timer callback, this is our way to process many background
      * operations incrementally, like clients timeout, eviction of unaccessed
      * expired keys and so forth. */
+    // Background process getting triggered
     if (aeCreateTimeEvent(server.el, 1, serverCron, NULL, NULL) == AE_ERR) {
         serverPanic("Can't create event loop timers.");
         exit(1);
@@ -2792,6 +2802,10 @@ extern struct redisCommand redisCommandTable[];
 /* Populates the Redis Command Table dict from from the static table in commands.c
  * which is auto generated from the json files in the commands folder. */
 void populateCommandTable(void) {
+    serverLog(LL_NOTICE,"Populating command table");
+    for(int i = 0; i < 241; i++){
+        printf("%20s\t%s\n", redisCommandTable[i].declared_name,redisCommandTable[i].summary);
+    }
     int j;
     struct redisCommand *c;
 
@@ -3491,6 +3505,8 @@ void populateCommandMovableKeys(struct redisCommand *cmd) {
  * If C_OK is returned the client is still alive and valid and
  * other operations can be performed by the caller. Otherwise
  * if C_ERR is returned the client was destroyed (i.e. after QUIT). */
+
+// Processing a command
 int processCommand(client *c) {
     if (!scriptIsTimedout()) {
         /* Both EXEC and EVAL call call() directly so there should be
@@ -4186,6 +4202,29 @@ void pingCommand(client *c) {
         else
             addReplyBulk(c,c->argv[1]);
     }
+}
+
+void meraWalaCommand(client *c) {
+    /* The command takes zero or one arguments. */
+//    if (c->argc > 2) {
+//        addReplyErrorArity(c);
+//        return;
+//    }
+//
+//    if (c->flags & CLIENT_PUBSUB && c->resp == 2) {
+//        addReply(c,shared.mbulkhdr[2]);
+//        addReplyBulkCBuffer(c,"pong",4);
+//        if (c->argc == 1)
+//            addReplyBulkCBuffer(c,"",0);
+//        else
+//            addReplyBulk(c,c->argv[1]);
+//    } else {
+//        if (c->argc == 1)
+//            addReply(c,shared.pong);
+//        else
+//            addReplyBulk(c,c->argv[1]);
+//    }
+    addReplyBulkCBuffer(c,"pong",4);
 }
 
 void echoCommand(client *c) {
@@ -6756,7 +6795,9 @@ redisTestProc *getTestProcByName(const char *name) {
 }
 #endif
 
+// This is the main function that takes charge for the server
 int main(int argc, char **argv) {
+    // Server MAIN function. This where it all starts.
     struct timeval tv;
     int j;
     char config_from_stdin = 0;
@@ -6830,6 +6871,7 @@ int main(int argc, char **argv) {
     char *exec_name = strrchr(argv[0], '/');
     if (exec_name == NULL) exec_name = argv[0];
     server.sentinel_mode = checkForSentinelMode(argc,argv, exec_name);
+    // Initialize server config
     initServerConfig();
     ACLInit(); /* The ACL subsystem must be initialized ASAP because the
                   basic networking code and client creation depends on it. */
@@ -6935,6 +6977,7 @@ int main(int argc, char **argv) {
         serverLog(LL_WARNING, "Configuration loaded");
     }
 
+    // Initialise the server
     initServer();
     if (background || server.pidfile) createPidFile();
     if (server.set_proc_title) redisSetProcTitle(NULL);
@@ -6980,14 +7023,14 @@ int main(int argc, char **argv) {
             }
         }
         if (server.ipfd.count > 0 || server.tlsfd.count > 0)
-            serverLog(LL_NOTICE,"Ready to accept connections");
+            serverLog(LL_NOTICE,"Ready to accept connections 1");
         if (server.sofd > 0)
             serverLog(LL_NOTICE,"The server is now ready to accept connections at %s", server.unixsocket);
         if (server.supervised_mode == SUPERVISED_SYSTEMD) {
             if (!server.masterhost) {
-                redisCommunicateSystemd("STATUS=Ready to accept connections\n");
+                redisCommunicateSystemd("STATUS=Ready to accept connections 2\n");
             } else {
-                redisCommunicateSystemd("STATUS=Ready to accept connections in read-only mode. Waiting for MASTER <-> REPLICA sync\n");
+                redisCommunicateSystemd("STATUS=Ready to accept connections in read-only mode. Waiting for MASTER <-> REPLICA sync 3\n");
             }
             redisCommunicateSystemd("READY=1\n");
         }
@@ -6996,7 +7039,7 @@ int main(int argc, char **argv) {
         InitServerLast();
         sentinelIsRunning();
         if (server.supervised_mode == SUPERVISED_SYSTEMD) {
-            redisCommunicateSystemd("STATUS=Ready to accept connections\n");
+            redisCommunicateSystemd("STATUS=Ready to accept connections 4\n");
             redisCommunicateSystemd("READY=1\n");
         }
     }

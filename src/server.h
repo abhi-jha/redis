@@ -2190,6 +2190,7 @@ typedef int redisGetKeysProc(struct redisCommand *cmd, robj **argv, int argc, ge
  *    specific data structures, such as: DEL, RENAME, MOVE, SELECT,
  *    TYPE, EXPIRE*, PEXPIRE*, TTL, PTTL, ...
  */
+// The redis command structure
 struct redisCommand {
     /* Declarative data */
     const char *declared_name; /* A string representing the command declared_name.
@@ -2203,7 +2204,7 @@ struct redisCommand {
     redisCommandGroup group; /* Command group */
     commandHistory *history; /* History of the command */
     const char **tips; /* An array of strings that are meant to be tips for clients/proxies regarding this command */
-    redisCommandProc *proc; /* Command implementation */
+    redisCommandProc *proc; /* Command implementation */ // This is the command implementation. Look for this in the redisCommands array in commands.c
     int arity; /* Number of arguments, it is possible to use -N to say >= N */
     uint64_t flags; /* Command flags, see CMD_*. */
     uint64_t acl_categories; /* ACl categories, see ACL_CATEGORY_*. */
@@ -3232,6 +3233,7 @@ char *redisBuildIdString(void);
 /* Commands prototypes */
 void authCommand(client *c);
 void pingCommand(client *c);
+void meraWalaCommand(client *c);
 void echoCommand(client *c);
 void commandCommand(client *c);
 void commandCountCommand(client *c);
@@ -3258,6 +3260,7 @@ void bitfieldroCommand(client *c);
 void setrangeCommand(client *c);
 void getrangeCommand(client *c);
 void incrCommand(client *c);
+void mulCommand(client *c);
 void decrCommand(client *c);
 void incrbyCommand(client *c);
 void decrbyCommand(client *c);
