@@ -97,6 +97,7 @@ void sendChildInfoGeneric(childInfoType info_type, size_t keys, double progress,
 
         int cow_info = (info_type != CHILD_INFO_TYPE_CURRENT_INFO);
         if (cow || cow_info) {
+            // Fork copy on write for RDB when it gets written to disk
             serverLog(cow_info ? LL_NOTICE : LL_VERBOSE,
                       "Fork CoW for %s: current %zu MB, peak %zu MB, average %llu MB",
                       pname, cow>>20, peak_cow>>20, (sum_cow/update_count)>>20);

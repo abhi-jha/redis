@@ -489,6 +489,7 @@ void loadServerConfigFromString(char *config) {
 
             /* If the target command name is the empty string we just
              * remove it from the command table. */
+            printf(argv[1]);
             retval = dictDelete(server.commands, argv[1]);
             serverAssert(retval == DICT_OK);
 

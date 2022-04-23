@@ -8850,6 +8850,7 @@ static sds askPassword(const char *msg) {
  * Program main()
  *--------------------------------------------------------------------------- */
 
+// This is the redis client CLI main function
 int main(int argc, char **argv) {
     int firstarg;
     struct timeval tv;

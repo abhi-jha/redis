@@ -1446,6 +1446,7 @@ int rdbSave(int req, char *filename, rdbSaveInfo *rsi) {
         return C_ERR;
     }
 
+    // Database being saved on the disk, async mode
     serverLog(LL_NOTICE,"DB saved on disk");
     server.dirty = 0;
     server.lastsave = time(NULL);
@@ -1489,6 +1490,7 @@ int rdbSaveBackground(int req, char *filename, rdbSaveInfo *rsi) {
                 strerror(errno));
             return C_ERR;
         }
+        // Starts automatically every 3600s
         serverLog(LL_NOTICE,"Background saving started by pid %ld",(long) childpid);
         server.rdb_save_time_start = time(NULL);
         server.rdb_child_type = RDB_CHILD_TYPE_DISK;
@@ -3268,6 +3270,7 @@ int rdbLoad(char *filename, rdbSaveInfo *rsi, int rdbflags) {
  * This function covers the case of actual BGSAVEs. */
 static void backgroundSaveDoneHandlerDisk(int exitcode, int bysignal) {
     if (!bysignal && exitcode == 0) {
+        // Background saving of Database to disk terminated in success.
         serverLog(LL_NOTICE,
             "Background saving terminated with success");
         server.dirty = server.dirty - server.dirty_before_bgsave;
