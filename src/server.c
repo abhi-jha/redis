@@ -2804,6 +2804,7 @@ extern struct redisCommand redisCommandTable[];
 void populateCommandTable(void) {
     serverLog(LL_NOTICE,"Populating command table");
     for(int i = 0; i < 241; i++){
+//        if (redisCommandTable[i].group == redisCommandGroup.)
         printf("%20s\t%s\n", redisCommandTable[i].declared_name,redisCommandTable[i].summary);
     }
     int j;
@@ -4611,6 +4612,7 @@ void addReplyCommandInfo(client *c, struct redisCommand *cmd) {
 /* Output the representation of a Redis command. Used by the COMMAND DOCS. */
 void addReplyCommandDocs(client *c, struct redisCommand *cmd) {
     /* Count our reply len so we don't have to use deferred reply. */
+    // Command docs
     long maplen = 1;
     if (cmd->summary) maplen++;
     if (cmd->since) maplen++;

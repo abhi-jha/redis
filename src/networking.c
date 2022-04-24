@@ -1002,6 +1002,7 @@ void setDeferredReplyBulkSds(client *c, void *node, sds s) {
 
 /* Add a C null term string as bulk reply */
 void addReplyBulkCString(client *c, const char *s) {
+    serverLog(LL_NOTICE, s);
     if (s == NULL) {
         addReplyNull(c);
     } else {

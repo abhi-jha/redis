@@ -649,6 +649,7 @@ void expireGenericCommand(client *c, long long basetime, int unit) {
         addReply(c, shared.cone);
         return;
     } else {
+        serverLog(LL_NOTICE, "expiring things");
         setExpire(c,c->db,key,when);
         addReply(c,shared.cone);
         /* Propagate as PEXPIREAT millisecond-timestamp */
